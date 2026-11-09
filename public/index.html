@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1410" />
+  <title>LOCAL CHESS ARENA</title>
+  <link rel="stylesheet" href="style.css?v=5" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <section id="screen-login" class="screen active">
+    <div class="card entry-card">
+      <div class="logo">♟</div>
+      <h1 class="title">LOCAL CHESS ARENA</h1>
+      <p class="tagline">Select your account</p>
+      
+      <div id="userSelectionList" class="user-list-grid"></div>
+      
+      <div style="margin-top: 20px; display: flex; gap: 10px; flex-direction: column;">
+        <button id="addUserBtn" class="secondary-btn">+ Add New User</button>
+        <button id="refreshUsersBtn" class="secondary-btn" style="border:none; font-size:0.8rem; color:var(--text-muted);">↻ Refresh Users List</button>
+        <div id="loginPasswordArea" class="hidden">
+          <input type="password" id="loginPasswordInput" placeholder="Enter Password" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white; margin-bottom:10px;" />
+          <button id="confirmLoginBtn" class="primary-btn" style="width:100%;">Login</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN APP -->
+  <section id="screen-lobby" class="screen">
+    <div class="app-container">
+      <header class="topbar">
+        <div class="brand">♟ ARENA</div>
+        <div class="topbar-right">
+          <div class="connection-status" id="connStatus"><span class="dot"></span><span id="connText">Connecting...</span></div>
+          <div class="user-chip" id="profileChip">
+            <span class="avatar" id="userInitial">?</span>
+            <span class="name" id="userName">Player</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+        </div>
+      </header>
+
+      <!-- PROFILE DROPDOWN -->
+      <div id="profileDropdown" class="profile-dropdown hidden">
+        <div class="dropdown-header">Accounts</div>
+        <div id="dropdownUserList" class="dropdown-list"></div>
+        <div class="dropdown-divider"></div>
+        <button id="settingsBtn" class="dropdown-item">⚙ Settings</button>
+        <button id="logoutBtn" class="dropdown-item" style="color:var(--red);">🚪 Logout</button>
+      </div>
+
+      <main class="view active" id="view-lobby-list">
+        <div class="lobby-header">
+          <h2>Available Rooms</h2>
+          <button id="createRoomBtn" class="primary-btn" style="width: auto; padding: 8px 16px; font-size: 0.9rem;">+ Create Room</button>
+        </div>
+        <div class="rooms-grid" id="roomsGrid"></div>
+      </main>
+
+      <main class="view" id="view-room">
+        <div class="room-header">
+          <button id="leaveRoomBtn" class="icon-btn danger-btn"><span>← Leave</span></button>
+          <h2 id="roomTitle">Room Name</h2>
+          <button id="resetGameBtn" class="icon-btn gold-btn" style="margin-left: auto;"><span>↺ Restart</span></button>
+        </div>
+        <div class="spectators-bar">
+          <span>👁 Spectators: <span id="specCount">0</span></span>
+          <div class="spec-list" id="specList"></div>
+        </div>
+        <div class="game-layout">
+          <div class="game-area">
+            <div class="player-info black-info">
+              <span class="role">BLACK</span><span class="name" id="blackName">Empty</span><span class="timer" id="gameTimer">00:00</span>
+            </div>
+            <div class="board-wrapper"><div class="chess-board" id="chessBoard"></div><div class="board-status" id="gameStatus">Turn: White</div></div>
+            <div class="player-info white-info"><span class="role">WHITE</span><span class="name" id="whiteName">Empty</span></div>
+            <div class="game-actions" id="gameActions">
+              <button id="drawBtn" class="secondary-btn">🤝 Offer Draw</button>
+              <button id="resignBtn" class="secondary-btn" style="color:var(--red);">🏳️ Resign</button>
+            </div>
+          </div>
+          <div class="move-history-panel"><h3>Move History</h3><div class="history-list" id="historyList"></div></div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- CHAT DRAWER -->
+  <button id="chatToggleBtn" class="chat-toggle">
+    💬
+    <span id="chatBadge" class="chat-badge hidden">0</span>
+  </button>
+  <div class="chat-drawer" id="chatDrawer">
+    <div class="chat-header"><h3>Room Chat</h3><button id="chatCloseBtn" class="change-btn">✖</button></div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area"><input type="text" id="chatInput" placeholder="Type a message..." /><button id="chatSendBtn">Send</button></div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- RESTART NOTIFICATION -->
+  <div id="restartNotification" class="side-notification hidden">
+    <div class="notif-content">
+      <p id="restartReqText">Player wants to restart.</p>
+      <div class="notif-actions">
+        <button id="acceptRestartBtn" class="btn-accept">✔ Accept</button>
+        <button id="declineRestartBtn" class="btn-decline">✖ Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN APPROVAL MODAL (Para sa Locked User) -->
+  <div id="loginApprovalModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>⚠️ Login Attempt</h3>
+      <p id="loginApprovalText">Someone is trying to log in to your account. Allow them to take over?</p>
+      <div class="modal-actions">
+        <button id="acceptLoginReqBtn" class="primary-btn" style="background:var(--green); color:#000;">✔ Yes, Allow</button>
+        <button id="denyLoginReqBtn" class="secondary-btn">✖ No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORCE LOGIN MODAL (Para sa Unlocked User) -->
+  <div id="forceLoginModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>⚠️ Account In Use</h3>
+      <p>This username is already logged in on another device. Force login?</p>
+      <div class="modal-actions">
+        <button id="forceLoginAcceptBtn" class="primary-btn" style="background:var(--green); color:#000;">✔ Force Login</button>
+        <button id="forceLoginCancelBtn" class="secondary-btn">✖ Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAW OFFER MODAL -->
+  <div id="drawModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Draw Offer</h3>
+      <p id="drawReqText">Player offers a draw.</p>
+      <div class="modal-actions">
+        <button id="acceptDrawBtn" class="primary-btn" style="background: var(--green); color: #000;">✔ Accept</button>
+        <button id="declineDrawBtn" class="secondary-btn">✖ Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MASTER KEY MODAL -->
+  <div id="masterKeyModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Admin Master Override</h3>
+      <p>Enter Master Key to force login.</p>
+      <input type="password" id="masterKeyInput" placeholder="Master Key" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--gold); background:rgba(0,0,0,0.3); color:white; margin-bottom:15px; outline:none;" />
+      <div class="modal-actions">
+        <button id="submitMasterKeyBtn" class="primary-btn">Submit</button>
+        <button id="cancelMasterKeyBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 400px;">
+      <h3>Settings</h3>
+      <div style="text-align:left; margin-bottom:20px;">
+        <label style="font-size:0.8rem; color:var(--text-muted);">Username</label>
+        <input type="text" id="settingsUsername" style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #333; background:#000; color:white;" />
+        <label style="font-size:0.8rem; color:var(--text-muted);">Password (Leave blank to keep current)</label>
+        <input type="password" id="settingsPassword" style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #333; background:#000; color:white;" />
+        
+        <div id="lockUserSection" style="margin-top:15px; display:flex; align-items: center; gap:10px;">
+          <input type="checkbox" id="settingsLockUser" style="width:20px; height:20px;" />
+          <label for="settingsLockUser" style="font-size:0.9rem; color:var(--gold);">Enable Lock User (Needs your Approval)</label>
+        </div>
+
+        <div id="adminSection" class="hidden" style="margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+          <h4 style="color:var(--red); margin-bottom:10px;">Admin Settings</h4>
+          <label style="font-size:0.8rem; color:var(--text-muted);">Master Key</label>
+          <input type="text" id="settingsMasterKey" style="width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #333; background:#000; color:white;" />
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: flex-end;">
+        <button id="saveSettingsBtn" class="primary-btn">Save Changes</button>
+        <button id="closeSettingsBtn" class="secondary-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD USER MODAL -->
+  <div id="addUserModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Create Account</h3>
+      <input type="text" id="newUsernameInput" placeholder="Username" style="width:100%; padding:10px; border-radius:8px; border:1px solid #333; background:#000; color:white; margin-bottom:15px;" />
+      <div class="modal-actions">
+        <button id="createUserBtn" class="primary-btn">Create</button>
+        <button id="cancelUserBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE ROOM MODAL -->
+  <div id="createRoomModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Create New Room</h3>
+      <p>Enter a name for your game room.</p>
+      <input type="text" id="newRoomNameInput" placeholder="e.g. Championship Match" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 15px; outline: none;" />
+      <div class="modal-actions">
+        <button id="confirmCreateBtn" class="primary-btn">Create</button>
+        <button id="cancelCreateBtn" class="secondary-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN COLOR SELECTION MODAL -->
+  <div id="joinColorModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Select Your Side</h3>
+      <p>Choose White, Black, or Spectate.</p>
+      <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+        <button id="joinWhiteBtn" class="primary-btn" style="background: #fff; color: #000; border: 1px solid #ccc;">♔ Play as White</button>
+        <button id="joinBlackBtn" class="primary-btn" style="background: #222; color: #fff; border: 1px solid #444;">♚ Play as Black</button>
+        <button id="joinSpectateBtn" class="secondary-btn">👁 Spectate Only</button>
+        <button id="cancelJoinBtn" class="secondary-btn" style="border: none; color: var(--text-muted); margin-top: 5px;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=5"></script>
+</body>
+</html>
